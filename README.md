@@ -16,3 +16,12 @@ There are 2 types of requests -:
 # Measure Time taken to retrieve a request from Server and Cache
 When the first request is made, server retrieves the file and saves it in the cache. When that file is needed again, file in cache is used. Retrieving the file from cache is quite fast as compared to retrieving file from the server.
 
+
+# Websockets
+I tested Websockets functionality using the website ` https://www.websocket.org/echo.html `
+This website lets you do an HTML5 WebSocket test against the echo server :
+
+
+
+![Websocket Test](Assets/Web-Socket-Test.png)
+
