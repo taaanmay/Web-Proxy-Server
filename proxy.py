@@ -14,7 +14,7 @@ ADDR = (SOCKET_IP, PORT)
 BUFFER = 8192
 MAX_CONNECTIONS = 5
 
-cache = []  # List of Cached Websites
+cache_list = []  # List of Cached Websites
 
 
 
@@ -25,7 +25,7 @@ def start():
         sock.bind(ADDR)                                     #Socket is bound to a port
         sock.listen(MAX_CONNECTIONS)
     except Exception as error:
-        print(error)
+        print(f"Error in start method {error}")
         sys.exit(2)   
 
     print(f"[LISTENING] on port {PORT} ")
@@ -113,7 +113,7 @@ def requestMethod(conn, data, port):
 
         # Default port.
         if port_position == -1 or base_URL_position < port_position:
-            port = 8080
+            port = 80
             baseURL = temp[:base_URL_position]
         
         # Specific port.
@@ -123,24 +123,23 @@ def requestMethod(conn, data, port):
         
         # Re-encode the data into bytes.
         data = data.encode(encoding)
-        proxy_method(baseURL, port, conn, data, method_type)
+        proxy_method(baseURL, port, conn, data, method_type, url)
     except Exception as e:
         pass
 
-def proxy_method(baseURL, port, conn, data, method_type):
+def proxy_method(baseURL, port, conn, data, method_type, url):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     if method_type == "CONNECT":
         try:
+           
             sock.connect((baseURL, port))
             reply = "HTTP/1.0 200 Connection established\r\nProxy-agent: Tanmay_Proxy\r\n\r\n"
             conn.sendall(reply.encode())
+        
         except socket.error as e:
-            print(e)
+            print(f"[ERROR in proxy mehthod {e}")
             return
-
-
-
 
         conn.setblocking(0)
         sock.setblocking(0)
@@ -151,6 +150,8 @@ def proxy_method(baseURL, port, conn, data, method_type):
                 sock.sendall(request)
             except socket.error as e:
                 pass
+            
+            
             try:
                 reply = sock.recv(BUFFER)
                 conn.sendall(reply)
@@ -158,34 +159,95 @@ def proxy_method(baseURL, port, conn, data, method_type):
                 dar = float(dar/1024)
                 dar = "%.3s" % (str(dar))
                 dar = "%s KB" % (dar)
-                print("Request Complete: %s -> %s <- " % (str(baseURL), str(dar)))
+                #print("Request Complete: %s -> %s <- " % (str(baseURL), str(dar)))
             except socket.error as e:
                 pass
+   
+   
     else:
-        sock.connect((baseURL, port))
-        sock.send(data)
-        try:
-            while True:
-                reply = sock.recv(BUFFER)
-                if (len(reply) > 0):
-                    conn.send(reply)
-                    dar = float(len(reply))
-                    dar = float(dar/1024)
-                    dar = "%.3s" % (str(dar))
-                    dar = "%s KB" % (dar)
-                    print("Request Complete: %s -> %s <- " % (str(baseURL), str(dar)))
-                else:
-                    break
-            sock.close()
-            conn.close
+   
+        if baseURL not in cache_list:
+            sock.connect((baseURL, port))
+            sock.send(data)
+            
+            #Add Website to Cache List
+            cache_list.append(baseURL)
+            print("This request has never been cached. ")
+            
+            #Fetch file from server
+            file = request_server(url)
 
-        except socket.error:
-            sock.close()
-            conn.close()
-            sys.exit(1)
+            if file:
+                store_cache(baseURL, url, file)
+
+            try:
+                while True:
+                    reply = sock.recv(BUFFER)
+                    if (len(reply) > 0):
+                        conn.send(reply)
+                        dar = float(len(reply))
+                        dar = float(dar/1024)
+                        dar = "%.3s" % (str(dar))
+                        dar = "%s KB" % (dar)
+                        #print("Request Complete: %s -> %s <- " % (str(baseURL), str(dar)))
+                    else:
+                        break
+                sock.close()
+                conn.close
+
+            except socket.error:
+                sock.close()
+                conn.close()
+                sys.exit(1)
+        
+        else:
+            content = request_cache(baseURL)
+            #print(f"[CONTENT]: {content}")
+            print(content)
+            response = 'HTTP/1.0 200 OK\n\n' + content
+            conn.send(response.encode())
+
 
         sock.close()
         conn.close()
+
+#Method where uncached request is requested from the server
+def request_server(url):
+    data = Request(url)
+    try:
+        resp = urlopen(data)
+        # Header decoded from the request
+        resp_header = resp.info()
+
+        # Content decoded from the request
+        content = resp.read().decode('utf-8')
+
+        return content
+    except HTTPError:
+        return None
+
+#Method to retreive request which has been stored in the cache previously
+def request_cache(baseURL):
+    try:
+        file_input = open(baseURL)    # Open baseURL from local file
+        content = file_input.read()
+        file_input.close()
+        return content          # Return retreived file
+    except IOError:
+        return None   
+
+
+def store_cache(baseURL, url, file):
+    print('Saving a copy of {} in the cache'.format(url))
+    try:
+        cache_file = open(baseURL, 'w') #Open Cache File using base
+    except Exception as e:
+        print(f"[ERROR] Opening Cache File: {e}")    
+    cache_file.write(file)
+    cache_file.close()    
+
+
+
 
 # def start():
 #   try:
