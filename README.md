@@ -13,5 +13,6 @@ There are 2 types of requests -:
 1) HTTP Requests
 2) HTTPS Requsts
 
-
+# Measure Time taken to retrieve a request from Server and Cache
+When the first request is made, server retrieves the file and saves it in the cache. When that file is needed again, file in cache is used. Retrieving the file from cache is quite fast as compared to retrieving file from the server.
 
