@@ -4,6 +4,7 @@ import sys
 #import requests
 import time
 import os
+from cmd import Cmd
 from urllib.request import Request, urlopen, HTTPError
 
 
@@ -15,11 +16,43 @@ ADDR = (SOCKET_IP, PORT)
 BUFFER = 8192
 MAX_CONNECTIONS = 5
 
-cache_list = []  # List of Cached Websites
+cache_list = []     # List of Cached Files
+blocked_list = []   # List of Blocked URLs
+
+
+class input_cmd(Cmd):
+    prompt = "You >> "
+
+    def do_help(self, args):
+        print(" [HOW TO BLOCK] Enter `block` and URL (eg - block www.facebook.com)")
+        print(" [HOW TO SEE BLOCKED URLs] Enter `showblocked` ")
+        print(" [HOW TO QUIT PROXY] Enter `quit`")
+
+    def do_block(self, args):
+        arg_URL = args.resplit(" ", 1)
+        arg_URL = arg_URL[0]
+        blocked_list.append(arg_URL)
+        print(f"[BLOCKED] : {arg_URL}")
+
+    def do_showblocked(self, args):
+        if blocked_list == []:
+            print("There are no blocked URLs")
+        else:    
+            print(f"LIST OF BLOCKED URLs : {blocked_list}")
+
+    def do_quit(self, args):
+        raise SystemExit()
+
+def user_help_method(console, irr):
+    console.cmdloop("Enter URL to be blocked: (eg - block www.facebook.com) or help to see available commands.")
+
+
 
 
 
 def start():
+    console = input_cmd()
+    _thread.start_new_thread(user_help_method, (console, None))
 
     try:    
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -30,10 +63,25 @@ def start():
         sys.exit(2)   
 
     print(f"[LISTENING] on port {PORT} ")
-    _thread.start_new_thread(listen_method, (sock,PORT))
+    
+    #_thread.start_new_thread(listen_method, (sock,PORT))
+    # while(1):
+    #     one = 1
 
     while(1):
-        one = 1
+        try:
+            # accept connection from browser
+            conn, _ = sock.accept()
+            
+            #Data is Received from the browser
+            data = conn.recv(BUFFER)
+            
+            # create thread for the connection          
+            _thread.start_new_thread(requestMethod, (conn, data, PORT))
+        except Exception as error:
+            sock.close()
+            print(f"[ERROR while listening] : {error}")
+            sys.exit(1)
 
 
 # def start():
@@ -51,6 +99,7 @@ def start():
 
 #     while(1):
 #         one = 1
+
 
      
 #LISTENER METHOD - Listens for Request on the port selected by the user. Current Port - 8080
@@ -122,22 +171,34 @@ def requestMethod(conn, data, port):
             port = int((temp[(port_position+1):])[:base_URL_position-port_position-1])
             baseURL = temp[:port_position]
         
-        # Re-encode the data into bytes.
-        data = data.encode(encoding)
-        proxy_method(baseURL, port, conn, data, method_type, url)
+        
+        #Check if the URL is blocked by user or not
+        if baseURL in blocked_list:
+            print(f"[BLOCKED] {url} is blocked by user")
+            conn.close()
+            return
+        else:
+
+            # Re-encode the data into bytes.
+            data = data.encode(encoding)
+            proxy_method(baseURL, port, conn, data, method_type, url)
+        
+    
+    
     except Exception as e:
         pass
 
 def proxy_method(baseURL, port, conn, data, method_type, url):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+    #Request Type - HTTPS
     if method_type == "CONNECT":
         try:
            
             sock.connect((baseURL, port))
             reply = "HTTP/1.0 200 Connection established\r\nProxy-agent: Tanmay_Proxy\r\n\r\n"
             conn.sendall(reply.encode())
-        
+            print(f"[CONNTECTING TO]: {baseURL}")
         except socket.error as e:
             print(f"[ERROR in proxy mehthod {e}")
             return
@@ -156,15 +217,16 @@ def proxy_method(baseURL, port, conn, data, method_type, url):
             try:
                 reply = sock.recv(BUFFER)
                 conn.sendall(reply)
-                dar = float(len(reply))
-                dar = float(dar/1024)
-                dar = "%.3s" % (str(dar))
-                dar = "%s KB" % (dar)
-                #print("Request Complete: %s -> %s <- " % (str(baseURL), str(dar)))
+                bandwidth = float(len(reply))
+                bandwidth = float(bandwidth/1024)
+                bandwidth = "%.3s" % (str(bandwidth))
+                bandwidth = "%s KB" % (bandwidth)
+                print("Request Complete: %s -> %s <- " % (str(baseURL), str(bandwidth)))
             except socket.error as e:
                 pass
    
-   
+
+    #Request Type - HTTP
     else:
    
         if baseURL not in cache_list:
@@ -192,11 +254,11 @@ def proxy_method(baseURL, port, conn, data, method_type, url):
                     reply = sock.recv(BUFFER)
                     if (len(reply) > 0):
                         conn.send(reply)
-                        dar = float(len(reply))
-                        dar = float(dar/1024)
-                        dar = "%.3s" % (str(dar))
-                        dar = "%s KB" % (dar)
-                        #print("Request Complete: %s -> %s <- " % (str(baseURL), str(dar)))
+                        bandwidth = float(len(reply))
+                        bandwidth = float(bandwidth/1024)
+                        bandwidth = "%.3s" % (str(bandwidth))
+                        bandwidth = "%s KB" % (bandwidth)
+                        print("Request Complete: %s -> %s <- " % (str(baseURL), str(bandwidth)))
                     else:
                         break
                 sock.close()
