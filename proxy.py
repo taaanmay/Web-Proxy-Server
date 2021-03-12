@@ -2,6 +2,7 @@ import socket
 import _thread
 import sys
 #import requests
+import time
 import os
 from urllib.request import Request, urlopen, HTTPError
 
@@ -167,6 +168,7 @@ def proxy_method(baseURL, port, conn, data, method_type, url):
     else:
    
         if baseURL not in cache_list:
+            time_counter_start = time.perf_counter()
             sock.connect((baseURL, port))
             sock.send(data)
             
@@ -179,6 +181,11 @@ def proxy_method(baseURL, port, conn, data, method_type, url):
 
             if file_server:
                 store_cache(url, baseURL, file_server)
+
+            time_counter_stop = time.perf_counter()
+            #Time Taken to fetch file from server
+            print(f"\n[REQUEST TIME TAKEN] - {time_counter_stop - time_counter_start} seconds")
+
 
             try:
                 while True:
@@ -201,9 +208,17 @@ def proxy_method(baseURL, port, conn, data, method_type, url):
                 sys.exit(1)
         
         else:
+
+            # #print(f"[CONTENT]: {content}")
+            # #print(content)
+            clock_start = time.perf_counter()
             content = request_cache(baseURL)
             #print(f"[CONTENT]: {content}")
-            print(content)
+            clock_stop = time.perf_counter()
+
+            #Time taken to fetch file by cache 
+            print(f"[CACHE TIME TAKEN] - {clock_stop - clock_start} seconds")
+            
             response = 'HTTP/1.0 200 OK\n\n' + content
             conn.send(response.encode())
 
