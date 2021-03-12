@@ -114,7 +114,7 @@ def requestMethod(conn, data, port):
 
         # Default port.
         if port_position == -1 or base_URL_position < port_position:
-            port = 80
+            port = 8080
             baseURL = temp[:base_URL_position]
         
         # Specific port.
@@ -266,29 +266,6 @@ def store_cache(url, baseURL, file_server):
 
 
 
-# def start():
-#   try:
-#       while True:
-#       conn, addr = sock.accept()
-#       thread = threading.Thread(target = handle_client, args = (conn, addr))  #New Thread Created
-#       thread.start()
-#       print(f"[ACTIVE CONNECTIONS {threading.activeCount()-1}")
-            
-
-
-# def handle_client(conn, addr):
-#   print(f"[NEW CONNECTION {addr} connected")
-
-#   connected = True
-#   while connected:
-#       msg_length = conn.recv(HEADER).decode(FORMAT)
-#       msg_length = int(msg_length)
-#       msg = conn.rcv(msg_length).decode(FORMAT)
-#       if msg == DISCONNECT_MESSAGE:
-#           connected = False
-
-#       print(f"[{addr}] msg")                          #Printing Message
-#   conn.close()    
 
 
 
