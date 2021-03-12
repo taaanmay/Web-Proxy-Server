@@ -175,10 +175,10 @@ def proxy_method(baseURL, port, conn, data, method_type, url):
             print("This request has never been cached. ")
             
             #Fetch file from server
-            file = request_server(url)
+            file_server = request_server(url)
 
-            if file:
-                store_cache(baseURL, url, file)
+            if file_server:
+                store_cache(url, baseURL, file_server)
 
             try:
                 while True:
@@ -208,10 +208,12 @@ def proxy_method(baseURL, port, conn, data, method_type, url):
             conn.send(response.encode())
 
 
-        sock.close()
-        conn.close()
+    sock.close()
+    conn.close()
 
-#Method where uncached request is requested from the server
+       
+
+# #Method where uncached request is requested from the server
 def request_server(url):
     data = Request(url)
     try:
@@ -226,7 +228,7 @@ def request_server(url):
     except HTTPError:
         return None
 
-#Method to retreive request which has been stored in the cache previously
+# #Method to retreive request which has been stored in the cache previously
 def request_cache(baseURL):
     try:
         file_input = open(baseURL)    # Open baseURL from local file
@@ -237,13 +239,13 @@ def request_cache(baseURL):
         return None   
 
 
-def store_cache(baseURL, url, file):
+def store_cache(url, baseURL, file_server):
     print('Saving a copy of {} in the cache'.format(url))
     try:
         cache_file = open(baseURL, 'w') #Open Cache File using base
     except Exception as e:
         print(f"[ERROR] Opening Cache File: {e}")    
-    cache_file.write(file)
+    cache_file.write(file_server)
     cache_file.close()    
 
 
