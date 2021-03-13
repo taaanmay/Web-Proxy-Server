@@ -25,3 +25,16 @@ This website lets you do an HTML5 WebSocket test against the echo server :
 
 ![Websocket Test](Assets/Web-Socket-Test.png)
 
+
+# Blocking URLs
+This proxy has a functionality of blocking URLs using a simple command. By blocking a URL, if a user tries to access a website which is blocked, user is not allowed to access it and the activity of the user is printed in the logs along with the date and time when the user tried to access the bloced website. 
+In the below pictures, I blocked Facebook and Twitter website. The result :
+
+
+
+
+![Blocking  Facebook](Assets/block-eg1.png)
+
+
+
+![Blocking  Twitter](Assets/block-eg2.png)
