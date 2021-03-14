@@ -147,150 +147,6 @@ def start():
             sys.exit(1)
 
 # receive data and parse it, check http vs https
-# def proxy_connection(conn, client_address):
-# 	global active_connections
-
-# 	# receive data from browser
-# 	data = conn.recv(HTTP_BUFFER)
-# 	# print(data)
-# 	if len(data) > 0:
-# 		try:
-# 			# get first line of request
-# 			request_line = data.decode().split('\n')[0]
-# 			try:
-# 				method = request_line.split(' ')[0]
-# 				url = request_line.split(' ')[1]
-# 				if method == 'CONNECT':
-# 					type = 'https'
-# 				else:
-# 					type = 'http'
-
-# 				if check_blocked(url):
-# 					active_connections -= 1
-# 					conn.close()
-# 					return
-
-# 				else:
-# 					# need to parse url for webserver and port
-# 					print(">> Request: " + request_line)
-# 					log(f">> Request:  { request_line}")
-                    
-# 					webserver = ""
-# 					port = -1
-# 					tmp = parseURL(url, type)
-# 					if len(tmp) > 0:
-# 						webserver, port = tmp
-# 						# print(webserver)
-# 						# print(port)
-# 					else:
-# 						return      
-
-# 					print(">> Connected to " + webserver + " on port " + str(port))
-                    
-                    
-#                     # log(f">> Connected to   {webserver}  on port  {port}")
-                    
-                    
-					
-# 					# check cache for response
-# 					start = time.time()
-# 					x = cache.get(webserver)
-# 					if x is not None:
-# 						# if in cache - don't bother setting up socket connection and send the response back
-# 						log(">> Sending cached response to user")
-#                         #log(">> Sending cached response to user")
-						
-                        
-#                         conn.sendall(x)
-						
-#                         finish = time.time()
-# 						print(f">> [CACHE TIME]: Cache took  + {finish-start):4f} + seconds")
-#                         log(f">> [CACHE TIME]: Cache took  + {(finish-start):4f} + seconds")
-# 						print(f">> [REQUEST TIME]: Request orignally took + {(response_times[webserver])} + seconds.")
-#                         log(f">> [REQUEST TIME]: Request orignally took + {(response_times[webserver])} + seconds.")
-					
-# 					else:
-# 						# connect to web server socket
-# 						sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# 						# sock.connect((webserver, port))
-
-# 						# handle http requests
-# 						if type == 'http':
-# 							# print("im a http request")
-# 							# string builder to build response for cache.
-# 							start = time.time()
-# 							string_builder = bytearray("", 'utf-8')
-# 							sock.connect((webserver, port))
-
-# 							# send client request to server
-# 							sock.send(data)
-# 							sock.settimeout(2)	
-
-# 							try:
-# 								while True:
-# 									# try to receive data from the server
-# 									webserver_data = sock.recv(HTTP_BUFFER)
-# 									# if data is not empty, send it to the browser
-# 									if len(webserver_data) > 0:
-# 										conn.send(webserver_data)
-# 										string_builder.extend(webserver_data)
-# 									# communication is stopped when a zero length of chunk is received
-# 									else:
-# 										break
-# 							except socket.error:
-# 								pass
-						
-# 							# communication is over so can now store the response_time and response which was built
-# 							finish = time.time()
-# 							print(f">> [CACHE MISS]: Request took + {(response_times[webserver])} + seconds.")
-#                             log(f">> [CACHE MISS]: Request orignally took + {(response_times[webserver])} + seconds.")
-# 							response_times[webserver] = finish - start 
-# 							cache[webserver] = string_builder
-# 							print(">> Added to cache: " + webserver)
-#                             log(">> Added to cache: " + webserver)
-# 							active_connections -= 1
-# 							sock.close()
-# 							conn.close()
-
-# 						# handle https requests
-# 						elif type == 'https':
-# 							sock.connect((webserver, port))
-# 							# print("im a https request")
-# 							conn.send(bytes("HTTP/1.1 200 Connection Established\r\n\r\n", "utf8"))
-							
-# 							connections = [conn, sock]
-# 							keep_connection = True
-
-# 							while keep_connection:
-# 								ready_sockets, sockets_for_writing, error_sockets = select.select(connections, [], connections, 100)
-								
-# 								if error_sockets:
-# 									break
-								
-# 								for ready_sock in ready_sockets:
-# 									# look for ready sock
-# 									other = connections[1] if ready_sock is connections[0] else connections[0]
-
-# 								try:
-# 									data = ready_sock.recv(HTTPS_BUFFER)
-# 								except socket.error:
-# 									print(">> Connection timeout...")
-# 									ready_sock.close()
-
-# 								if data:
-# 									other.sendall(data)
-# 									keep_connection = True
-# 								else:
-# 									keep_connection = False
-			
-#             except IndexError:
-# 				pass
-# 		except UnicodeDecodeError:
-# 			pass
-# 	else:
-# 		pass				
-
-# receive data and parse it, check http vs https
 def proxy_connection(conn, client_address):
 	global active_connections
 
@@ -337,9 +193,10 @@ def proxy_connection(conn, client_address):
 					start = time.time()
 					x = cache.get(webserver)
 					if x is not None:
-						# if in cache - don't bother setting up socket connection and send the response back
+						# Response in cache. 
 						print("[URL in CACHE] Sending cached response to user")
 						log("[URL in CACHE] Sending cached response to user")
+						#Send the response without setting up socket
 						conn.sendall(x)
 						finish = time.time()
 						time_taken = finish-start
@@ -349,6 +206,10 @@ def proxy_connection(conn, client_address):
 						print("[COMPARISON] Request took: " + str(response_times[webserver]) + "s without cache.")
 						log("[COMPARISON] Request took: " + str(response_times[webserver]) + "s without cache.")
 					
+					
+					#Response not in socket. 
+					#Setup a socket
+					#Check if HTTP or HTTPS and handle request accordingly
 					else:
 						# connect to web server socket
 						sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -356,72 +217,12 @@ def proxy_connection(conn, client_address):
 
 						# handle http requests
 						if type == 'http':
-							# print("im a http request")
-							# string builder to build response for cache.
-							start = time.time()
-							string_builder = bytearray("", 'utf-8')
-							sock.connect((webserver, port))
-
-							# send client request to server
-							sock.send(data)
-							sock.settimeout(2)	
-
-							try:
-								while True:
-									# try to receive data from the server
-									webserver_data = sock.recv(HTTP_BUFFER)
-									# if data is not empty, send it to the browser
-									if len(webserver_data) > 0:
-										conn.send(webserver_data)
-										string_builder.extend(webserver_data)
-									# communication is stopped when a zero length of chunk is received
-									else:
-										break
-							except socket.error:
-								pass
+							if handle_HTTP_request(sock, webserver, port, data, conn) is True:
+								active_connections -= 1
 						
-							# communication is over so can now store the response_time and response which was built
-							finish = time.time()
-							print("[CACHE MISS] Request took: " + str(finish-start) + "s")
-							log("[CACHE MISS] Request took: " + str(finish-start) + "s")
-							response_times[webserver] = finish - start 
-							cache[webserver] = string_builder
-							print("[CACHE ADD] Added to cache: " + webserver)
-							log("[CACHE ADD] Added to cache: " + webserver)
-							active_connections -= 1
-							sock.close()
-							conn.close()
-
 						# handle https requests
 						elif type == 'https':
-							sock.connect((webserver, port))
-							# print("im a https request")
-							conn.send(bytes("HTTP/1.1 200 Connection Established\r\n\r\n", "utf8"))
-							
-							connections = [conn, sock]
-							keep_connection = True
-
-							while keep_connection:
-								ready_sockets, sockets_for_writing, error_sockets = select.select(connections, [], connections, 100)
-								
-								if error_sockets:
-									break
-								
-								for ready_sock in ready_sockets:
-									# look for ready sock
-									other = connections[1] if ready_sock is connections[0] else connections[0]
-
-								try:
-									data = ready_sock.recv(HTTPS_BUFFER)
-								except socket.error:
-									print(">> Connection timeout...")
-									ready_sock.close()
-
-								if data:
-									other.sendall(data)
-									keep_connection = True
-								else:
-									keep_connection = False
+							handle_HTTPS_request(sock, webserver, conn,data, port)
 			except IndexError:
 				pass
 		except UnicodeDecodeError:
@@ -429,11 +230,7 @@ def proxy_connection(conn, client_address):
 	else:
 		pass				
 	
-	# active_connections -= 1
-	# print(">> Closing client connection...")
-	# conn.close()
-	# return
-
+	
 
 def parseURL(url, type):
     http_position = url.find("://")
@@ -496,8 +293,76 @@ def log(input):
 
 
 
+def handle_HTTP_request(sock, webserver, port, data, conn):
+	# print("im a http request")
+							# string builder to build response for cache.
+							start = time.time()
+							string_builder = bytearray("", 'utf-8')
+							sock.connect((webserver, port))
+
+							# send client request to server
+							sock.send(data)
+							sock.settimeout(2)	
+
+							try:
+								while True:
+									# try to receive data from the server
+									webserver_data = sock.recv(HTTP_BUFFER)
+									# if data is not empty, send it to the browser
+									if len(webserver_data) > 0:
+										conn.send(webserver_data)
+										string_builder.extend(webserver_data)
+									# communication is stopped when a zero length of chunk is received
+									else:
+										break
+							except socket.error:
+								pass
+						
+							# communication is over so can now store the response_time and response which was built
+							finish = time.time()
+							print("[CACHE MISS] Request took: " + str(finish-start) + "s")
+							log("[CACHE MISS] Request took: " + str(finish-start) + "s")
+							response_times[webserver] = finish - start 
+							cache[webserver] = string_builder
+							print("[CACHE ADD] Added to cache: " + webserver)
+							log("[CACHE ADD] Added to cache: " + webserver)
+							
+							sock.close()
+							conn.close()
+							return True
+
+#Method to Handle HTTPS request
+def handle_HTTPS_request(sock, webserver, conn,data, port):
+	sock.connect((webserver, port))
+							# print("im a https request")
+	#Send message - Connection Established
+	conn.send(bytes("HTTP/1.1 200 Connection Established\r\n\r\n", "utf8"))
 
 
+	connections = [conn, sock]
+	keep_connection = True
+
+	while keep_connection:
+		ready_sockets, sockets_for_writing, error_sockets = select.select(connections, [], connections, 100)
+								
+		if error_sockets:
+			break
+							
+		for ready_sock in ready_sockets:
+			# look for ready sock
+			other = connections[1] if ready_sock is connections[0] else connections[0]
+
+			try:
+				data = ready_sock.recv(HTTPS_BUFFER)
+			except socket.error:
+				print(">> Connection timeout...")
+				ready_sock.close()
+
+			if data:
+				other.sendall(data)
+				keep_connection = True
+			else:
+				keep_connection = False
 
 print("[STARTING] Proxy is starting...")
 start()
