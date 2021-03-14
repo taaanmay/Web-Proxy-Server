@@ -309,11 +309,14 @@ def proxy_connection(conn, client_address):
 				else:
 					type = 'http'
 
+				#Check if URL is blocked
 				if check_blocked(url):
 					active_connections -= 1
+					#Connection is closed
 					conn.close()
 					return
 
+				#URL Not Blocked
 				else:
 					# need to parse url for webserver and port
 					print(">> Request: " + request_line)
@@ -323,29 +326,28 @@ def proxy_connection(conn, client_address):
 					tmp = parseURL(url, type)
 					if len(tmp) > 0:
 						webserver, port = tmp
-						# print(webserver)
-						# print(port)
+						
 					else:
 						return 
 
-					print(">> Connected to " + webserver + " on port " + str(port))
-					log(">> Connected to " + webserver + " on port " + str(port))
+					print("[CONNECTION ESTABLISHED] Connected to " + webserver + " on port " + str(port))
+					log("[CONNECTION ESTABLISHED] Connected to " + webserver + " on port " + str(port))
 					
 					# check cache for response
 					start = time.time()
 					x = cache.get(webserver)
 					if x is not None:
 						# if in cache - don't bother setting up socket connection and send the response back
-						print(">> Sending cached response to user")
-						log(">> Sending cached response to user")
+						print("[URL in CACHE] Sending cached response to user")
+						log("[URL in CACHE] Sending cached response to user")
 						conn.sendall(x)
 						finish = time.time()
 						time_taken = finish-start
-						print(f"Request took: {finish - start:0.4f} seconds")
-						log(f"Request took: {finish - start:0.4f} seconds")
+						print(f"[CACHE SUCCESSFUL] Request took: {finish - start:0.4f} seconds with cache")
+						log(f"[CACHE SUCCESSFUL] Request took: {finish - start:0.4f} seconds with cache")
 						#print(f">> Request took: " + {finish-start:0.4f} + "s with cache.")
-						print(">> Request took: " + str(response_times[webserver]) + "s without cache.")
-						log(">> Request took: " + str(response_times[webserver]) + "s without cache.")
+						print("[COMPARISON] Request took: " + str(response_times[webserver]) + "s without cache.")
+						log("[COMPARISON] Request took: " + str(response_times[webserver]) + "s without cache.")
 					
 					else:
 						# connect to web server socket
@@ -380,12 +382,12 @@ def proxy_connection(conn, client_address):
 						
 							# communication is over so can now store the response_time and response which was built
 							finish = time.time()
-							print(">> Request took: " + str(finish-start) + "s")
-							log(">> Request took: " + str(finish-start) + "s")
+							print("[CACHE MISS] Request took: " + str(finish-start) + "s")
+							log("[CACHE MISS] Request took: " + str(finish-start) + "s")
 							response_times[webserver] = finish - start 
 							cache[webserver] = string_builder
-							print(">> Added to cache: " + webserver)
-							log(">> Added to cache: " + webserver)
+							print("[CACHE ADD] Added to cache: " + webserver)
+							log("[CACHE ADD] Added to cache: " + webserver)
 							active_connections -= 1
 							sock.close()
 							conn.close()
@@ -484,7 +486,7 @@ def check_blocked(url):
 def log(input):
     
     currTime = datetime.datetime.now().strftime("%Y-%m-%d")
-    newFile = "/Users/tanmaykaushik/Desktop/modify/logs" + str(currTime) + ".txt"
+    newFile = "/Users/tanmaykaushik/Desktop/SUBMISSION/Implementation-Proxy/logs" + str(currTime) + ".txt"
     newFile = newFile.replace(' ', '_')
     newFile = newFile.replace(':', '_')
     newFile = "" + newFile
