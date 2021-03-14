@@ -152,11 +152,14 @@ def proxy_connection(conn, client_address):
 
 	# receive data from browser
 	data = conn.recv(HTTP_BUFFER)
-	# print(data)
+	
+	#If data is not null
 	if len(data) > 0:
 		try:
 			# get first line of request
 			request_line = data.decode().split('\n')[0]
+			
+			#retreive type of method
 			try:
 				method = request_line.split(' ')[0]
 				url = request_line.split(' ')[1]
@@ -222,7 +225,34 @@ def proxy_connection(conn, client_address):
 						
 						# handle https requests
 						elif type == 'https':
-							handle_HTTPS_request(sock, webserver, conn,data, port)
+							sock.connect((webserver, port))
+							# print("im a https request")
+							conn.send(bytes("HTTP/1.1 200 Connection Established\r\n\r\n", "utf8"))
+							
+							connections = [conn, sock]
+							keep_connection = True
+
+							while keep_connection:
+								ready_sockets, sockets_for_writing, error_sockets = select.select(connections, [], connections, 100)
+								
+								if error_sockets:
+									break
+								
+								for ready_sock in ready_sockets:
+									# look for ready sock
+									other = connections[1] if ready_sock is connections[0] else connections[0]
+
+								try:
+									data = ready_sock.recv(HTTPS_BUFFER)
+								except socket.error:
+									print(">> Connection timeout...")
+									ready_sock.close()
+
+								if data:
+									other.sendall(data)
+									keep_connection = True
+								else:
+									keep_connection = False
 			except IndexError:
 				pass
 		except UnicodeDecodeError:
@@ -235,7 +265,7 @@ def proxy_connection(conn, client_address):
 def parseURL(url, type):
     http_position = url.find("://")
 
-    # Type of request
+    # If "://" is not present then the temp is the url
     if (http_position == -1):
         temp = url
     else:    
